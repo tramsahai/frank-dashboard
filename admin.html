@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Frank Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* These styles are only for the form, so they live here and not in style.css. */
+    .formTitle {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 4px 0 16px 0;
+    }
+
+    .field {
+      margin-top: 14px;
+    }
+
+    /* Inputs use 16px text because iOS Safari zooms the page in if the text is smaller. */
+    .field input,
+    .field textarea {
+      display: block;
+      width: 100%;
+      margin-top: 6px;
+      padding: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      color: #1b2b33;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #dde7ea;
+      border-radius: 12px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .field textarea {
+      height: 80px;
+      resize: none;
+    }
+
+    .timeRow {
+      display: flex;
+    }
+
+    .timeRow .field {
+      flex: 1;
+    }
+
+    .timeRow .field + .field {
+      margin-left: 12px;
+    }
+
+    .saveButton {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      font-size: 17px;
+      font-weight: 600;
+      font-family: inherit;
+      color: #ffffff;
+      background: #1fb5a3;
+      border: none;
+      border-radius: 14px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .saveButton.busy {
+      background: #9fd8d0;
+    }
+
+    .statusText {
+      margin-top: 14px;
+      font-size: 15px;
+      min-height: 20px;
+    }
+
+    .statusText.good {
+      color: #1a9a8a;
+    }
+
+    .statusText.bad {
+      color: #d9822b;
+    }
+
+    .backLink {
+      display: block;
+      text-align: center;
+      margin-top: 6px;
+      font-size: 14px;
+      color: #8a97a0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <h1 class="formTitle">Add event</h1>
+
+    <section class="card" id="noTokenCard" style="display:none;">
+      <div class="label">Not signed in</div>
+      <p class="emptyText">Open this page once with your token on the end of the address, like admin.html?k=YOURTOKEN. After that it is saved on this device.</p>
+    </section>
+
+    <section class="card" id="formCard" style="display:none;">
+      <div class="field">
+        <div class="label">Title</div>
+        <input type="text" id="titleInput" placeholder="Study Maths 511" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <div class="label">Date</div>
+        <input type="date" id="dateInput">
+      </div>
+
+      <div class="timeRow">
+        <div class="field">
+          <div class="label">Start</div>
+          <input type="time" id="startInput" value="09:00">
+        </div>
+        <div class="field">
+          <div class="label">End</div>
+          <input type="time" id="endInput" value="10:00">
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">Notes (optional)</div>
+        <textarea id="notesInput"></textarea>
+      </div>
+
+      <button class="saveButton" id="saveButton" type="button">Add to calendar</button>
+      <div class="statusText" id="statusText"></div>
+    </section>
+
+    <a class="backLink" href="index.html">Back to dashboard</a>
+
+  </div>
+
+  <script>
+    // This is your Apps Script web app address. It is safe to keep here because it does nothing without the token.
+    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoQoztl2kg8ixk3MP8GtJofkIgtWzMLp0oVU8AiVNdtGBR-SnLF0NOJQKjwlsop94L/exec";
+
+    // This is the name the token is saved under in localStorage. The dashboard will use the same name.
+    var TOKEN_KEY = "frankToken";
+
+    // This is a short way to find an element on the page by its id.
+    function getEl(id) {
+      return document.getElementById(id);
+    }
+
+    // This adds a zero in front of single digit numbers, so 7 becomes 07.
+    function pad(number) {
+      if (number < 10) {
+        return "0" + number;
+      }
+      return String(number);
+    }
+
+    // This reads the saved token, and returns an empty text if localStorage is blocked.
+    function readToken() {
+      try {
+        return localStorage.getItem(TOKEN_KEY) || "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    // This looks for ?k=TOKEN in the address, saves it, then cleans the address bar so the token is not left showing.
+    function grabTokenFromAddress() {
+      var query = window.location.search;
+      var match = /[?&]k=([^&]+)/.exec(query);
+
+      if (match === null) {
+        return;
+      }
+
+      try {
+        localStorage.setItem(TOKEN_KEY, decodeURIComponent(match[1]));
+      } catch (e) {
+        // If saving fails there is nothing more we can do, so the page will show the not signed in message.
+      }
+
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    }
+
+    // This shows a message under the button. The type is either good or bad and decides the colour.
+    function setStatus(text, type) {
+      var el = getEl("statusText");
+      el.textContent = text;
+      el.className = "statusText " + type;
+    }
+
+    // This fills the date box with today so you do not have to pick it every time.
+    function setDefaultDate() {
+      var now = new Date();
+      getEl("dateInput").value = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+    }
+
+    // This checks the form, sends the event to Apps Script, and shows the result.
+    function saveEvent() {
+      var title = getEl("titleInput").value.trim();
+      var date = getEl("dateInput").value;
+      var start = getEl("startInput").value;
+      var end = getEl("endInput").value;
+      var notes = getEl("notesInput").value.trim();
+      var token = readToken();
+
+      if (title === "" || date === "" || start === "" || end === "") {
+        setStatus("Please fill in the title, date, start and end.", "bad");
+        return;
+      }
+
+      // Times look like 09:00, so comparing them as text works for checking the order.
+      if (end <= start) {
+        setStatus("The end time must be after the start time.", "bad");
+        return;
+      }
+
+      var url = SCRIPT_URL +
+        "?token=" + encodeURIComponent(token) +
+        "&action=addEvent" +
+        "&title=" + encodeURIComponent(title) +
+        "&date=" + encodeURIComponent(date) +
+        "&start=" + encodeURIComponent(start) +
+        "&end=" + encodeURIComponent(end) +
+        "&notes=" + encodeURIComponent(notes);
+
+      var button = getEl("saveButton");
+      button.disabled = true;
+      button.className = "saveButton busy";
+      button.textContent = "Adding";
+      setStatus("", "good");
+
+      // This stops the request after 25 seconds so the button never stays stuck.
+      var controller = new AbortController();
+      var timer = setTimeout(function () {
+        controller.abort();
+      }, 25000);
+
+      fetch(url, { signal: controller.signal })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (result) {
+          if (result.ok) {
+            setStatus("Added to your calendar.", "good");
+            getEl("titleInput").value = "";
+            getEl("notesInput").value = "";
+          } else {
+            setStatus("Failed: " + (result.error || "unknown error"), "bad");
+          }
+        })
+        .catch(function () {
+          setStatus("Could not reach Frank. Check the connection and try again.", "bad");
+        })
+        .then(function () {
+          clearTimeout(timer);
+          button.disabled = false;
+          button.className = "saveButton";
+          button.textContent = "Add to calendar";
+        });
+    }
+
+    // This runs when the page opens. It saves the token if one is in the address, then shows the form or the warning.
+    grabTokenFromAddress();
+
+    if (readToken() === "") {
+      getEl("noTokenCard").style.display = "block";
+    } else {
+      getEl("formCard").style.display = "block";
+      setDefaultDate();
+      getEl("saveButton").addEventListener("click", saveEvent);
+    }
+  </script>
+</body>
+</html>

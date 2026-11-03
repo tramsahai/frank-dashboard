@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Frank">
+  <title>Frank</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="sky" id="sky"></div>
+
+  <div class="page">
+
+    <section class="card heroCard">
+      <div class="label" id="greetingSmall">Good evening</div>
+      <h1 class="greeting">Hey Thasmei</h1>
+
+      <div class="clockTime" id="clockTime">00:00</div>
+      <div class="clockDate" id="clockDate">Monday 1 January</div>
+
+      <div class="divider"></div>
+
+      <div class="weatherRow">
+        <div class="weatherIcon" id="weatherIcon"></div>
+        <div>
+          <div class="weatherTemp" id="weatherTemp">&nbsp;</div>
+          <div class="weatherText" id="weatherText">Loading weather</div>
+        </div>
+        <div class="weatherFeels" id="weatherFeels"></div>
+      </div>
+
+      <div class="label rainLabel">Chance of rain</div>
+      <div class="rainStrip" id="rainStrip"></div>
+    </section>
+
+    <section class="tileRow">
+      <div class="card tile">
+        <div class="label">Day left</div>
+        <div class="tileBig" id="dayLeftText">0%</div>
+        <div class="batteryWrap">
+          <div class="battery"><div class="batteryFill" id="dayFill"></div></div>
+          <div class="batteryCap"></div>
+        </div>
+      </div>
+      <div class="card tile">
+        <div class="label">Exams left</div>
+        <div class="tileBig" id="examsLeftText">0</div>
+        <div class="tileSmall" id="nextExamText">&nbsp;</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="label">Today</div>
+      <div id="agendaList"></div>
+    </section>
+
+    <section class="card">
+      <div class="label">Exam countdown</div>
+      <div id="examList"></div>
+    </section>
+
+    <footer class="credit">
+      Weather data by <a href="https://open-meteo.com/">Open-Meteo</a>
+    </footer>
+
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,546 @@
+/* This resets default spacing so every browser starts from the same place. */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: #eef5f4;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #1b2b33;
+}
+
+/* The sky is a fixed layer behind everything. The cards blur whatever is inside it. */
+.sky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-transition: opacity 1s;
+  transition: opacity 1s;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(31, 181, 163, 0.28), rgba(31, 181, 163, 0) 45%),
+    radial-gradient(circle at 92% 30%, rgba(245, 158, 59, 0.22), rgba(245, 158, 59, 0) 40%),
+    linear-gradient(160deg, #e8f6f3 0%, #f4f7fb 50%, #fdf3e6 100%);
+}
+
+/* These swap the sky colour for the weather. Clear and partly cloudy days keep the default above. */
+.sky.day.cloudy {
+  background: linear-gradient(180deg, #d9e3ea 0%, #eef2f6 100%);
+}
+
+.sky.day.rain {
+  background: linear-gradient(180deg, #b3c1cc 0%, #dce4ea 100%);
+}
+
+.sky.day.storm {
+  background: linear-gradient(180deg, #8794a2 0%, #b4bfca 100%);
+}
+
+.sky.night {
+  background: linear-gradient(180deg, #0b1426 0%, #17284d 100%);
+}
+
+.sky.night.cloudy {
+  background: linear-gradient(180deg, #0e1829 0%, #1d2b45 100%);
+}
+
+.sky.night.rain {
+  background: linear-gradient(180deg, #0c121d 0%, #1a2535 100%);
+}
+
+.sky.night.storm {
+  background: linear-gradient(180deg, #090d15 0%, #161f2d 100%);
+}
+
+/* When animations are turned off in app.js, everything freezes in place. */
+.sky.still * {
+  -webkit-animation-play-state: paused;
+  animation-play-state: paused;
+}
+
+/* The page sits above the sky. Night mode fades the page and the sky between 22:00 and 06:00. */
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 18px 16px 30px 16px;
+  -webkit-transition: opacity 1s;
+  transition: opacity 1s;
+}
+
+body.night .page {
+  opacity: 0.45;
+}
+
+body.night .sky {
+  opacity: 0.6;
+}
+
+/* Every white glassy box on the page uses this class. The webkit prefix is needed for iOS 15. */
+.card {
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(40, 70, 90, 0.08);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+/* After dark the cards get a little more solid so the text stays easy to read. */
+body.dark .card {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* The sun is a warm circle with a soft glow that slowly pulses. */
+.sun {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #ffe9a8, #f9b23c);
+  box-shadow: 0 0 60px 30px rgba(249, 178, 60, 0.45);
+  animation: sunPulse 6s ease-in-out infinite;
+}
+
+@keyframes sunPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* The moon is a pale circle with a faint glow. */
+.moon {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fffbe6, #e6dfb4);
+  box-shadow: 0 0 40px 14px rgba(255, 250, 220, 0.25);
+}
+
+/* Stars are tiny white dots that fade in and out. JS sets the size, place and timing of each one. */
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.25;
+  }
+}
+
+/* A cloud is one rounded bar with two round bumps on top. The size comes from font size, so JS can scale each cloud. */
+.cloud {
+  position: absolute;
+  left: -240px;
+  width: 8em;
+  height: 2.6em;
+  border-radius: 2.6em;
+  background: #ffffff;
+  opacity: 0.85;
+  animation: cloudDrift 100s linear infinite;
+}
+
+.cloud::before {
+  content: "";
+  position: absolute;
+  left: 1.4em;
+  top: -1.6em;
+  width: 3.4em;
+  height: 3.4em;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.cloud::after {
+  content: "";
+  position: absolute;
+  left: 3.4em;
+  top: -2.2em;
+  width: 4.4em;
+  height: 4.4em;
+  border-radius: 50%;
+  background: inherit;
+}
+
+.sky.day.rain .cloud {
+  background: #8f9ba6;
+  opacity: 0.8;
+}
+
+.sky.day.storm .cloud {
+  background: #5d6874;
+  opacity: 0.85;
+}
+
+.sky.night .cloud {
+  background: #6f7fa0;
+  opacity: 0.3;
+}
+
+@keyframes cloudDrift {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(170vw);
+  }
+}
+
+/* Rain drops are thin lines that fall from the top to the bottom. */
+.drop {
+  position: absolute;
+  top: -40px;
+  width: 2px;
+  height: 18px;
+  border-radius: 2px;
+  background: rgba(70, 110, 140, 0.5);
+  animation: rainFall 1s linear infinite;
+}
+
+.sky.night .drop {
+  background: rgba(170, 200, 230, 0.45);
+}
+
+@keyframes rainFall {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(115vh);
+  }
+}
+
+/* The flash is a white sheet that blinks quickly now and then during a storm. */
+.flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  opacity: 0;
+  animation: flashBurst 8s linear infinite;
+}
+
+@keyframes flashBurst {
+  0% {
+    opacity: 0;
+  }
+  92% {
+    opacity: 0;
+  }
+  93% {
+    opacity: 0.5;
+  }
+  94% {
+    opacity: 0;
+  }
+  95% {
+    opacity: 0.35;
+  }
+  96% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Small grey labels used above each section. */
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a97a0;
+}
+
+.greeting {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.clockTime {
+  font-size: 76px;
+  font-weight: 200;
+  line-height: 1.05;
+  margin-top: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clockDate {
+  font-size: 17px;
+  color: #5d6d76;
+  margin-top: 2px;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(27, 43, 51, 0.08);
+  margin: 16px 0;
+}
+
+.weatherRow {
+  display: flex;
+  align-items: center;
+}
+
+.weatherIcon {
+  font-size: 42px;
+  margin-right: 12px;
+  line-height: 1;
+}
+
+.weatherTemp {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.weatherText {
+  font-size: 14px;
+  color: #5d6d76;
+  margin-top: 4px;
+}
+
+.weatherFeels {
+  margin-left: auto;
+  text-align: right;
+  font-size: 13px;
+  color: #8a97a0;
+}
+
+.rainLabel {
+  margin-top: 18px;
+}
+
+.rainStrip {
+  display: flex;
+  margin-top: 8px;
+}
+
+.rainCol {
+  flex: 1;
+  text-align: center;
+}
+
+.rainBarBox {
+  height: 44px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.rainBar {
+  width: 14px;
+  min-height: 4px;
+  border-radius: 7px;
+  background: #1fb5a3;
+}
+
+.rainPct {
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.rainHour {
+  font-size: 11px;
+  color: #8a97a0;
+  margin-top: 1px;
+}
+
+.tileRow {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.tile {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.tile + .tile {
+  margin-left: 14px;
+}
+
+.tileBig {
+  font-size: 34px;
+  font-weight: 600;
+  margin-top: 6px;
+  line-height: 1.1;
+}
+
+.tileSmall {
+  font-size: 13px;
+  color: #5d6d76;
+  margin-top: 10px;
+}
+
+/* The battery is a rounded outline with a fill inside and a small cap on the right. */
+.batteryWrap {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.battery {
+  flex: 1;
+  height: 20px;
+  border: 2px solid #c9d6da;
+  border-radius: 7px;
+  padding: 2px;
+}
+
+.batteryFill {
+  height: 100%;
+  width: 50%;
+  border-radius: 3px;
+  background: #1fb5a3;
+}
+
+.batteryCap {
+  width: 3px;
+  height: 8px;
+  margin-left: 2px;
+  border-radius: 0 2px 2px 0;
+  background: #c9d6da;
+}
+
+/* Each agenda item has the time on the left and a vertical line with a dot next to the title. */
+.agendaItem {
+  position: relative;
+  padding: 10px 0 4px 0;
+}
+
+.agendaTime {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 52px;
+  font-size: 13px;
+  color: #8a97a0;
+}
+
+.agendaBody {
+  position: relative;
+  margin-left: 62px;
+  padding: 0 0 10px 16px;
+  border-left: 2px solid #dde7ea;
+}
+
+.agendaBody::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c5d2d6;
+}
+
+.agendaTitle {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.agendaRange {
+  font-size: 13px;
+  color: #8a97a0;
+  margin-top: 2px;
+}
+
+.agendaItem.done {
+  opacity: 0.45;
+}
+
+.agendaItem.now .agendaBody {
+  border-left: 2px solid #1fb5a3;
+}
+
+.agendaItem.now .agendaBody::before {
+  background: #1fb5a3;
+  box-shadow: 0 0 0 4px rgba(31, 181, 163, 0.2);
+}
+
+.agendaItem.now .agendaTime {
+  color: #1fb5a3;
+  font-weight: 600;
+}
+
+.emptyText {
+  font-size: 15px;
+  color: #8a97a0;
+  padding: 12px 0 4px 0;
+}
+
+.examRow {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.examRing {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  margin-right: 14px;
+}
+
+.examName {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.examMeta {
+  font-size: 13px;
+  color: #8a97a0;
+  margin-top: 2px;
+}
+
+.credit {
+  text-align: center;
+  font-size: 11px;
+  color: #8a97a0;
+  margin-top: 6px;
+}
+
+.credit a {
+  color: #8a97a0;
+}
